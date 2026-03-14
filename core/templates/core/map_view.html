@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>{{ title }}</title>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+
+        .map-container {
+            width: 90%;
+            margin: auto;
+        }
+
+        svg {
+            width: 100%;
+            height: auto;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <h2>{{ title }}</h2>
+
+    <div class="map-container">
+        {{ map|safe }}
+    </div>
+
+</body>
+
+</html>

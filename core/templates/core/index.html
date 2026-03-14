@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Ward Map</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        #map {
+            height: 90vh;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Ward + Limpiyadhura Map</h1>
+    <div id="map"></div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        // Initialize map
+        var map = L.map('map').setView([28.2, 80.5], 7);
+
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18
+        }).addTo(map);
+
+        // Load GeoJSON
+        fetch("/static/core/Ward_plus_Limpiyadhura.geojson")
+            .then(response => response.json())
+            .then(data => {
+                L.geoJSON(data, {
+                    style: function (feature) {
+                        return {
+                            color: "blue",
+                            weight: 1,
+                            fillOpacity: 0.4
+                        };
+                    },
+                    onEachFeature: function (feature, layer) {
+                        // Add popup: District, GaPa/Napa, Ward number
+                        var district = feature.properties.DISTRICT || "N/A";
+                        var gapa = feature.properties.GaPa_NaPa || "N/A";
+                        var ward = feature.properties.NEW_WARD_N || "N/A";
+                        layer.bindPopup(
+                            "<b>District:</b> " + district +
+                            "<br><b>GaPa/Napa:</b> " + gapa +
+                            "<br><b>Ward Number:</b> " + ward
+                        );
+                    }
+                }).addTo(map);
+
+                // Fit map to GeoJSON bounds
+                map.fitBounds(L.geoJSON(data).getBounds());
+            })
+            .catch(err => console.log("GeoJSON load error:", err));
+    </script>
+</body>
+
+</html>

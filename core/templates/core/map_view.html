@@ -2,25 +2,23 @@
 <html>
 
 <head>
-    <title>{{ title }}</title>
+
+    <title>Nepal Map</title>
 
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: Arial;
             text-align: center;
         }
 
-        .map-container {
-            width: 90%;
+        #map {
+            height: 85vh;
+            width: 95%;
             margin: auto;
-        }
-
-        svg {
-            width: 100%;
-            height: auto;
         }
     </style>
 
@@ -28,11 +26,77 @@
 
 <body>
 
-    <h2>{{ title }}</h2>
+    <h2>Nepal Map</h2>
 
-    <div class="map-container">
-        {{ map|safe }}
-    </div>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+
+        const stateFilter = "{{ state|default:'' }}".toLowerCase()
+        const districtFilter = "{{ district|default:'' }}".toLowerCase()
+        const gapaFilter = "{{ gapa|default:'' }}".toLowerCase()
+        const wardFilter = "{{ ward|default:'' }}"
+
+        var map = L.map('map').setView([28.3, 84], 7)
+
+        L.tileLayer(
+            'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+            { maxZoom: 18 }
+        ).addTo(map)
+
+
+        fetch("/static/core/Ward_plus_Limpiyadhura.geojson")
+            .then(res => res.json())
+            .then(data => {
+
+                function filterFeature(feature) {
+
+                    let state = String(feature.properties.STATE_CODE).toLowerCase()
+                    let district = feature.properties.DISTRICT.toLowerCase()
+                    let gapa = feature.properties.GaPa_NaPa.toLowerCase()
+                    let ward = String(feature.properties.NEW_WARD_N)
+
+                    if (stateFilter && state !== stateFilter) return false
+                    if (districtFilter && district !== districtFilter) return false
+                    if (gapaFilter && gapa !== gapaFilter) return false
+                    if (wardFilter && ward !== wardFilter) return false
+
+                    return true
+                }
+
+                var layer = L.geoJSON(data, {
+
+                    filter: filterFeature,
+
+                    style: {
+                        color: "black",
+                        weight: 1,
+                        fillOpacity: 0.4
+                    },
+
+                    onEachFeature: function (feature, layer) {
+
+                        let d = feature.properties
+
+                        layer.bindPopup(
+
+                            "<b>District:</b> " + d.DISTRICT +
+                            "<br><b>GaPa/Napa:</b> " + d.GaPa_NaPa +
+                            "<br><b>Ward:</b> " + d.NEW_WARD_N
+
+                        )
+
+                    }
+
+                }).addTo(map)
+
+                map.fitBounds(layer.getBounds())
+
+            })
+
+    </script>
 
 </body>
 

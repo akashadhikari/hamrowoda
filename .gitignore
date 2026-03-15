@@ -111,3 +111,9 @@ coverage.xml
 # -----------------------------
 .env.*
 .venv.*
+
+# -----------------------------
+# geojson
+# -----------------------------
+*.geojson
+core/static/core/Ward_plus_Limpiyadhura.geojson

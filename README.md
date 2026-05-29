@@ -10,7 +10,7 @@ A GeoDjango web application for visualizing Nepal's administrative ward boundari
 - **Database:** PostgreSQL + PostGIS
 - **GeoJSON API:** djangorestframework-gis
 - **Frontend:** Leaflet.js
-- **Data:** Nepal ward boundaries (6803 records)
+- **Data:** Nepal ward boundaries (6803 wards)
 
 ---
 
@@ -58,7 +58,7 @@ source .venv/bin/activate
 ## 3. Install Python dependencies
 
 ```bash
-pip install django djangorestframework djangorestframework-gis psycopg2-binary GDAL==$(gdal-config --version)
+pip install django djangorestframework djangorestframework-gis psycopg2-binary python-dotenv GDAL==$(gdal-config --version)
 ```
 
 ---
@@ -101,7 +101,7 @@ Verify PostGIS is working:
 psql -U mapuser -d mapdb -c "SELECT PostGIS_version();"
 ```
 
-You should see something like:
+You should see:
 
 ```
             postgis_version
@@ -112,32 +112,58 @@ You should see something like:
 
 ---
 
-## 5. Configure GDAL path in settings.py
+## 5. Create your .env file
 
-Find your GDAL library path:
+Copy the provided example file:
+
+```bash
+cp .env.example .env
+```
+
+Open `.env` and fill in your values:
+
+```
+SECRET_KEY=your-generated-secret-key-here
+DEBUG=True
+ALLOWED_HOSTS=localhost,127.0.0.1
+
+DB_NAME=mapdb
+DB_USER=mapuser
+DB_PASSWORD=mappassword
+DB_HOST=localhost
+DB_PORT=5432
+
+GDAL_LIBRARY_PATH=/opt/homebrew/lib/libgdal.dylib
+GEOS_LIBRARY_PATH=/opt/homebrew/lib/libgeos_c.dylib
+```
+
+Generate a secure `SECRET_KEY`:
+
+```bash
+python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+```
+
+Paste the output as the value of `SECRET_KEY` in your `.env`.
+
+---
+
+## 6. Find your GDAL and GEOS library paths
 
 ```bash
 # macOS
 find /opt/homebrew -name "libgdal*" 2>/dev/null
+find /opt/homebrew -name "libgeos_c*" 2>/dev/null
 
 # Linux
 find /usr -name "libgdal*" 2>/dev/null
+find /usr -name "libgeos_c*" 2>/dev/null
 ```
 
-Add the result to `nepal_map/settings.py`:
-
-```python
-# macOS (Apple Silicon)
-GDAL_LIBRARY_PATH = '/opt/homebrew/lib/libgdal.dylib'
-GEOS_LIBRARY_PATH = '/opt/homebrew/lib/libgeos_c.dylib'
-
-# Linux example
-# GDAL_LIBRARY_PATH = '/usr/lib/libgdal.so'
-```
+Update `GDAL_LIBRARY_PATH` and `GEOS_LIBRARY_PATH` in your `.env` with the exact paths returned.
 
 ---
 
-## 6. Run migrations
+## 7. Run migrations
 
 ```bash
 python manage.py makemigrations
@@ -146,7 +172,7 @@ python manage.py migrate
 
 ---
 
-## 7. Load ward data
+## 8. Load ward data
 
 The GeoJSON file is not included in the repo due to its size. Obtain `Ward_plus_Limpiyadhura.geojson` separately, then load it into the database:
 
@@ -163,7 +189,7 @@ Done. Created: 6803, Skipped: 0
 
 ---
 
-## 8. Run the development server
+## 9. Run the development server
 
 ```bash
 python manage.py runserver

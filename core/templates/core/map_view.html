@@ -1,103 +1,62 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-
-    <title>Nepal Map</title>
-
-    <meta charset="utf-8">
-
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
+    <meta charset="UTF-8">
+    <title>Nepal Ward Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <style>
-        body {
-            font-family: Arial;
-            text-align: center;
-        }
-
-        #map {
-            height: 85vh;
-            width: 95%;
-            margin: auto;
-        }
+        body { font-family: sans-serif; margin: 20px; }
+        #map { height: 600px; width: 100%; margin-top: 20px; border: 1px solid #ccc; }
     </style>
-
 </head>
-
 <body>
-
-    <h2>Nepal Map</h2>
+    <h2>Nepal Ward Map</h2>
+    State: {{ state|default:"All" }}<br>
+    District: {{ district|default:"All" }}<br>
+    GaPa: {{ gapa|default:"All" }}<br>
+    Ward Number: {{ ward|default:"All" }}
 
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
     <script>
+        const map = L.map('map').setView([28.3949, 84.1240], 7);
 
-        const stateFilter = "{{ state|default:'' }}".toLowerCase()
-        const districtFilter = "{{ district|default:'' }}".toLowerCase()
-        const gapaFilter = "{{ gapa|default:'' }}".toLowerCase()
-        const wardFilter = "{{ ward|default:'' }}"
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
 
-        var map = L.map('map').setView([28.3, 84], 7)
+        const params = new URLSearchParams();
+        {% if state %}    params.append("state",    "{{ state }}"); {% endif %}
+        {% if district %} params.append("district", "{{ district }}"); {% endif %}
+        {% if gapa %}     params.append("gapa",     "{{ gapa }}"); {% endif %}
+        {% if ward %}     params.append("ward",     "{{ ward }}"); {% endif %}
 
-        L.tileLayer(
-            'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-            { maxZoom: 18 }
-        ).addTo(map)
-
-
-        fetch("/static/core/Ward_plus_Limpiyadhura.geojson")
+        fetch(`/api/wards/?${params.toString()}`)
             .then(res => res.json())
             .then(data => {
-
-                function filterFeature(feature) {
-
-                    let state = String(feature.properties.STATE_CODE).toLowerCase()
-                    let district = feature.properties.DISTRICT.toLowerCase()
-                    let gapa = feature.properties.GaPa_NaPa.toLowerCase()
-                    let ward = String(feature.properties.NEW_WARD_N)
-
-                    if (stateFilter && state !== stateFilter) return false
-                    if (districtFilter && district !== districtFilter) return false
-                    if (gapaFilter && gapa !== gapaFilter) return false
-                    if (wardFilter && ward !== wardFilter) return false
-
-                    return true
-                }
-
-                var layer = L.geoJSON(data, {
-
-                    filter: filterFeature,
-
+                if (!data.features?.length) return;
+                const layer = L.geoJSON(data, {
                     style: {
-                        color: "black",
-                        weight: 1,
-                        fillOpacity: 0.4
+                        color: "#e63946",
+                        weight: 1.5,
+                        fillColor: "#e63946",
+                        fillOpacity: 0.25
                     },
-
-                    onEachFeature: function (feature, layer) {
-
-                        let d = feature.properties
-
-                        layer.bindPopup(
-
-                            "<b>District:</b> " + d.DISTRICT +
-                            "<br><b>GaPa/Napa:</b> " + d.GaPa_NaPa +
-                            "<br><b>Ward:</b> " + d.NEW_WARD_N
-
-                        )
-
+                    onEachFeature: (feature, layer) => {
+                        const p = feature.properties;
+                        layer.bindPopup(`
+                            <b>${p.gapa_napa}</b><br>
+                            Ward: ${p.ward_number}<br>
+                            District: ${p.district}<br>
+                            Type: ${p.type_gn}<br>
+                            Area: ${p.area_sqkm?.toFixed(2)} km²
+                        `);
                     }
-
-                }).addTo(map)
-
-                map.fitBounds(layer.getBounds())
-
+                }).addTo(map);
+                map.fitBounds(layer.getBounds());
             })
-
+            .catch(err => console.error("Failed:", err));
     </script>
-
 </body>
-
 </html>

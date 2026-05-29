@@ -117,3 +117,8 @@ coverage.xml
 # -----------------------------
 *.geojson
 core/static/core/Ward_plus_Limpiyadhura.geojson
+*.topojson
+*.shp
+*.dbf
+*.prj
+*.shx
